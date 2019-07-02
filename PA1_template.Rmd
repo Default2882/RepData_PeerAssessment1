@@ -21,7 +21,7 @@ library(ggplot2)
 library(dplyr)
 mydata <- summarise(group_by(data[c("steps","date")], date), Total.steps = sum(steps))
 g <- ggplot(mydata, aes(Total.steps))
-p <- g + geom_histogram()
+p <- g + geom_histogram(col = "blue", fill = "green") +  xlab("Total number of steps") + ylab("Frequencies per day") + ggtitle("Total number of steps taken per day")
 p
 ```
   
@@ -29,20 +29,61 @@ p
   
 ```{r}
 #Mean of total steps taken each day
-data2 <- data[c("date", "steps")]
-data2$date <- factor(data2$date)
-data3 <- split(data2, data2$date)
-print(lapply(data3, x <- function(k){mean(k$steps)}))
+print(paste("Mean of the provided dataset", mean(mydata$Total.steps , na.rm = T)))
 #Median of total steps taken each day
-print(lapply(data3, x <- function(k){median(k$steps)}))
+print(paste("Median of the provided dataset", median(mydata$Total.steps , na.rm = T)))
 ```
 
 ## What is the average daily activity pattern?
+```{r}
+mydat2 <- summarise(group_by(na.omit(data[c("steps","interval")]) , interval), AvgSteps = mean(steps))
+plot(mydat2$interval, mydat2$AvgSteps, type = "l", xlab = "Interval(min)", ylab = "AverageSteps", main = "Average daily activity pattern", col = "red")
 
-
+```
+  
+  
+## Find the interval with the maximum amount of average activity:
+```{r}
+Intervalmax <- mydat2$interval[which.max(mydat2$AvgSteps)]
+print(paste('Interval with largest mean number of steps per day is = ', Intervalmax))
+```
 
 ## Imputing missing values
-
-
+```{r}
+#No. of NA values in the original data set is
+print(paste('No. of rows with NAs value are = ',nrow(data[is.na(data$steps),])))
+#Imputing the NAs with the average of daily activity
+missingInd <- which(is.na(data$steps))
+newdata <- data
+for (index in missingInd) {
+  newdata$steps[index] <- ceiling(mydat2$AvgSteps[mydat2$interval == newdata$interval[index]])
+}
+```
+  
+    
+## Creating a histogram of the new dataset
+```{r}
+newmydata <- summarise(group_by(newdata[c("steps","date")], date), Total.steps = sum(steps))
+newg <- ggplot(newmydata, aes(Total.steps))
+newp <- newg + geom_histogram(col = "purple", fill = "orange") +  xlab("Total number of steps") + ylab("Frequencies per day") + ggtitle("Total number of steps taken per day")
+newp
+```
+  
+    
+## Calculating the mean and median of the total number of steps taken per day of the imputed dataset:
+```{r}
+#Mean of total steps taken each day
+print(paste("Mean of the imputed dataset",mean(newmydata$Total.steps)))
+#Median of total steps taken each day
+print(paste("Median of the imputed dataset",median(newmydata$Total.steps)))
+```
+The median and mean of the total steps per day increased due to the imputed values for NAs.
 
 ## Are there differences in activity patterns between weekdays and weekends?
+```{r}
+slavedays <- c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday")
+newdata$Type.day <- as.factor(ifelse(weekdays(newdata$date) %in% slavedays, "weekday", "weekend"))
+fg <- ggplot(newdata, aes(y = steps, x = interval))
+fp <- fg + geom_line() + facet_grid(rows = vars(Type.day)) + labs(x = "Time interval", y = "Average Steps", title = "Differences in activity patterns between weekdays and weekends")
+fp
+```
