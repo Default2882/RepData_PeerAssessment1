@@ -1,4 +1,4 @@
----
+  ---
 title: "Reproducible Research: Peer Assessment 1"
 output: 
   html_document:
@@ -7,12 +7,35 @@ output:
 
 
 ## Loading and preprocessing the data
-
-
+```{r}
+#loading the data set and converting the date column into date class
+library(lubridate)
+data <- read.csv("activity.csv")
+data$date <- as.Date(as.character(data$date))
+str(data)
+```
 
 ## What is mean total number of steps taken per day?
-
-
+```{r}
+library(ggplot2)
+library(dplyr)
+mydata <- summarise(group_by(data[c("steps","date")], date), Total.steps = sum(steps))
+g <- ggplot(mydata, aes(Total.steps))
+p <- g + geom_histogram()
+p
+```
+  
+## Mean and Median of total number of steps taken per dat
+  
+```{r}
+#Mean of total steps taken each day
+data2 <- data[c("date", "steps")]
+data2$date <- factor(data2$date)
+data3 <- split(data2, data2$date)
+print(lapply(data3, x <- function(k){mean(k$steps)}))
+#Median of total steps taken each day
+print(lapply(data3, x <- function(k){median(k$steps)}))
+```
 
 ## What is the average daily activity pattern?
 
